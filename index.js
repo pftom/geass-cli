@@ -19,7 +19,7 @@ function parse(str) {
   console.log(JSON.stringify(value));
 }
 
-if (file === '_') {
+if (file === '-') {
   process.stdin.pipe(concat(parse));
 } else {
   readFile(file, (err, dataBuffer) => {
