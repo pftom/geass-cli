@@ -4,7 +4,7 @@ const readFile = require('fs').readFile;
 const yargs = require('yargs');
 
 const argv = yargs
-  .usage('parse-json [options]')
+  .usage('geass [options]')
   .help('h')
   .alias('h', 'help')
   .demand('f')
