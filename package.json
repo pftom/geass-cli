@@ -13,7 +13,16 @@
   "author": "pftom <1043269994@qq.com>",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^2.3.2",
+    "commander": "^2.15.0",
+    "execa": "^0.10.0",
+    "fs-extra": "^5.0.0",
+    "fstream-npm": "^1.2.1",
     "mississippi": "^3.0.0",
+    "react": "^16.2.0",
+    "tar-pack": "^3.4.1",
+    "tmp": "0.0.33",
+    "validate-npm-package-name": "^3.0.0",
     "yargs": "^11.0.0"
   },
   "devDependencies": {

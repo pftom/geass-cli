@@ -1,32 +1,27 @@
-#!/usr/bin/env node
-const concat = require('mississippi').concat;
-const readFile = require('fs').readFile;
-const yargs = require('yargs');
+const path = require('path');
+const commander = require('commander');
+const fs = require('fs');
+const chalk = require('chalk');
+const packageJson = require('./package.json');
 
-const argv = yargs
-  .usage('geass [options]')
-  .help('h')
-  .alias('h', 'help')
-  .demand('f')
-  .nargs('f', 1)
-  .describe('f', 'JSON file to parse')
-  .argv;
+commander
+  .version(packageJson.version)
+  .usage('[option] appName')
+  .parse(process.argv);
 
-const file = argv.f;
-
-function parse(str) {
-  const value = JSON.parse(str);
-  console.log(JSON.stringify(value));
-}
-
-if (file === '-') {
-  process.stdin.pipe(concat(parse));
+if (!commander.args[0]) {
+  commander.help();
 } else {
-  readFile(file, (err, dataBuffer) => {
-    if (err) {
-      throw err;
-    } else {
-      parse(dataBuffer.toString());
-    }
-  });
+  const dest = path.join(process.cwd(), commander.args[1]);
+
+  if (fs.existsSync(dest)) {
+    console.error(chalk.red('Existing directory here, please run new command for an inexistence folder!'));
+    process.exit(1);
+  }
+
+  fs.mkdirSync(dest);
+  process.chdir(dest);
 }
+
+
+
