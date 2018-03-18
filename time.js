@@ -1,6 +1,13 @@
-process.stdin.pipe(process.stdout);
-const start = Date.now();
-process.on('exit', () => {
-  const timeTaken = Date.now() - start;
-  console.error(`Time (s): ${timeTaken / 1000}`);
-});
+const commander = require('commander');
+
+commander
+  .command('new <projectName>')
+  .action((projectName, cmd) => {
+    init(projectName);
+  });
+
+commander.parse( process.argv );
+
+function init ( projectName   ) {
+
+}
