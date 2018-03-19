@@ -6,7 +6,7 @@ const packageJson = require('./package.json');
 
 commander
   .version(packageJson.version)
-  .usage('[option] appName')
+  .usage('[command] projectName')
   .parse(process.argv);
 
 if (!commander.args[0]) {
