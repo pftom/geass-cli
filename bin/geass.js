@@ -9,18 +9,62 @@ const pkg = require('../package.json');
 
 updateNotifier({ pkg }).notify();
 
+// the print detail help function
 function printHelp() {
-  console.log(' Commands:');
   console.log();
-  console.log('   new           Create a new application');
-  console.log('   generate      Generate a new standard component (short-cut: "g")');
-  console.log('   test          Generate a suit of tests for a component (args: "componentName")');
+  console.log('  Commands:');
+  console.log();
+  console.log('     new           Create a new application (args: appName)');
+  console.log('     generate      Generate a new standard component (short-cut: "g", args: componentName)');
+  console.log('     test          Generate a suit of tests for a component (args: "componentName")');
   console.log();
   console.log('All commands can be run with -h (or --help) for more information.');
 }
 
+// judge a command is valid and executable and return the executable file
+function executable(subCmd) {
+  const fileName = path.join(__dirname, `geass-${subCmd}`);
+
+  if (fs.existsSync(fileName)) {
+    return fileName;
+  }
+
+  return false;
+}
+
+// when close, listen on exit code
+function wrapExit(thread) {
+  thread.on('close', (code) => {
+    process.exit(code);
+  });
+}
+
+// define the CLI basic version show up and usage
 commander
   .version(pkg.version, '-v, --version')
   .usage('<command> [options]')
   .on('--help', printHelp)
   .parse(process.argv);
+
+// different command execute different bin
+const aliases = {
+  g: 'generate',
+};
+let subCmd = commander.args[0];
+const args = commander.args[1];
+
+// the short-cut about generate
+if (aliases[subCmd] !== undefined) {
+  subCmd = aliases[subCmd];
+}
+
+// if subCmd is not exist
+if (!subCmd) {
+  commander.help();
+} else {
+  const bin = executable(subCmd);
+  if (bin) {
+    console.log(bin);
+    wrapExit(spawn(bin, args, {}))
+  }
+}
