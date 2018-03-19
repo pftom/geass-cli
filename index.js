@@ -8,7 +8,8 @@ const packageJson = require('./package.json');
 
 commander
   .version(packageJson.version)
-  .usage('[command] projectName')
+  .usage('<command> [options]')
+  
   .parse(process.argv);
 
 if (!commander.args[0]) {
