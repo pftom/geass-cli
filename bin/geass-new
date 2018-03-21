@@ -1,0 +1,160 @@
+#!/usr/bin/env node
+
+const commander = require('commander');
+const fs = require('fs-extra');
+const os = require('os');
+const path = require('path');
+const chalk = require('chalk');
+const semver = require('semver');
+const vfs = require('vinyl-fs');
+const through = require('through2');
+const execSync = require('child_process').execSync;
+const spawn = require('cross-spawn');
+
+
+// this command description
+commander
+  .usage('[options] appName')
+  .parse(process.argv);
+
+if (!commander.args[0]) {
+  commander.help();
+} else {
+  const appName = commander.args[1];
+  const dest = path.join(process.cwd, appName);
+
+  if (fs.existsSync(dest)) {
+    console.error(chalk.error(`Existing directory here, 
+      please run new command for an empty folder`));
+    process.exit(1);
+  }
+
+  // if not empty, create this naming folder and switch cwd to this dest
+  fs.mkdirpSync(dest);
+  process.chdir(dest);
+
+  // add template
+  const templatePath = path.join(__dirname, '../template/app/');
+  const projectName = path.basename(dest);
+
+  vfs.src(['**/*'], { cwd: templatePath })
+    .pipe(infoCreateFile(dest, templatePath))
+    .pipe(vfs.dest(dest))
+    .on('end', () => {
+      chalk.info('run', 'npm install');
+
+      console.log(`Creating a new Geass app in ${dest}`);
+      console.log();
+
+      const packageJson = {
+        name: appName,
+        version: '0.1.0',
+        private: true,
+      };
+
+      fs.writeFileSync(
+        path.join(dest, 'package.json'),
+        JSON.stringify(packageJson, null, 2) + os.EOL
+      );
+
+      if (!semver.satisfies(process.version, '>= 6.0.0')) {
+        console.log(
+          chalk.yellow(`You are using Node ${process.version} so the project will be bootstrapped with an old unsupported version of tools.\n\n
+            Please update to Node 6 or higher for a better, fully supported experience.\n`),
+        );
+      }
+
+      run(dest, appName);
+    })
+}
+
+
+// all function in one place
+function infoCreateFile(dest, cwd) {
+  return through.obj((file, enc, cb) => {
+    if (!file.stat.isFile()) {
+      return cb();
+    }
+
+    chalk.info('create', file.path.replace(cwd, ''));
+    this.push(file);
+
+    return cb();
+  });
+}
+
+function install(root, dependencies) {
+  return new Promise((resolve, reject) => {
+    const command = 'npm';
+    const args = [
+      'install',
+      '--save',
+      '--save-exact',
+      '--loglevel',
+      'error',
+    ].concat(allDependencies);
+  
+    const child = spawn(command, args, { stdio: 'inherit' });
+    child.on('close', code => {
+      if (code !== 0) {
+        reject({
+          command: `${command} ${args.join(' ')}`,
+        });
+        return;
+      }
+      resolve();
+    });;
+  })
+}
+
+function run(root, appName) {
+  const scriptName = 'geass-scripts';
+  const allDependencies = ['geassjs', scriptName];
+
+  console.log('Installing packages. This might take a couple of minutes.');
+  console.log();
+  console.log(
+    `Installing ${chalk.cyan('geassjs')} and ${chalk.cyan('geass-scripts')}`
+  );
+  console.log();
+
+  install(root, allDependencies)
+    .catch(reason => {
+      console.log();
+      console.log('Aborting installation');
+
+      if (reason.command) {
+        console.log(`  ${chalk.cyan(reason.command)} has failed.`);
+      } else {
+        console.log(chalk.red('Unexpected error. Please report it as a bug:'));
+        console.log(reason);
+      }
+      console.log();
+
+      // On 'exit' we will delete these files from target directory.
+      const knownGeneratedFiles = ['package.json', 'node_modules'];
+      const currentFiles = fs.readdirSync(path.join(root));
+      currentFiles.forEach(file => {
+        knownGeneratedFiles.forEach(fileToMatch => {
+          // This remove all of knownGeneratedFiles.
+          if (file === fileToMatch) {
+            console.log(`Deleting generated file... ${chalk.cyan(file)}`);
+            fs.removeSync(path.join(root, file));
+          }
+        });
+      });
+      const remainingFiles = fs.readdirSync(path.join(root));
+      if (!remainingFiles.length) {
+        // Delete target folder if empty
+        console.log(
+          `Deleting ${chalk.cyan(`${appName}/`)} from ${chalk.cyan(
+            path.resolve(root, '..')
+          )}`
+        );
+        process.chdir(path.resolve(root, '..'));
+        fs.removeSync(path.join(root));
+      }
+      console.log('Done.');
+      process.exit(1);
+    })
+}

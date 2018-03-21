@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const commander = require('commander');
 const spawn = require('cross-spawn');
 const path = require('path');
@@ -23,10 +25,10 @@ function printHelp() {
 
 // judge a command is valid and executable and return the executable file
 function executable(subCmd) {
-  const fileName = path.join(__dirname, `geass-${subCmd}`);
+  const file = path.join(__dirname, `geass-${subCmd}`);
 
-  if (fs.existsSync(fileName)) {
-    return fileName;
+  if (fs.existsSync(file)) {
+    return file;
   }
 
   return false;
@@ -50,6 +52,8 @@ commander
 const aliases = {
   g: 'generate',
 };
+
+console.log('command', commander.args);
 let subCmd = commander.args[0];
 const args = commander.args[1];
 
@@ -65,6 +69,8 @@ if (!subCmd) {
   const bin = executable(subCmd);
   if (bin) {
     console.log(bin);
-    wrapExit(spawn(bin, args, {}))
+    // wrapExit(spawn(bin, args, { stdio: 'inherit' }));
+  } else {
+    commander.help();
   }
 }
